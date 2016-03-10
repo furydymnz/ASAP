@@ -229,7 +229,7 @@ void searchForSlienceBlock()
 		totalSlienceBlock += consecutiveBlock;
 		cout << "end" << " --- "<< consecutiveBlock << " blocks" << endl;
 	}
-	cout << "Total slience block: " << totalSlienceBlock << endl;
+	cout << "Total silence block: " << totalSlienceBlock << endl;
 	cout << "Total silence time: "  << totalSlienceBlock*wave.sample_block_period/1000.0 << "s" << endl;
 	cout << "Total silence percentage: " << (float)totalSlienceBlock/wave.sample_block_num*100 << "%" << endl;
 }
