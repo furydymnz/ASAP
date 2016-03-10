@@ -110,7 +110,7 @@ void readDataChunk(fstream &file)
 		break;
 	}
 
-	wave.sample_block_period = 30;   //ms
+	wave.sample_block_period = 10;   //ms
 	// Take 1s as a sample block, so there are (sample_rate / byte_rate) sample blocks
 	wave.sample_block_size = (int)ceil(wave.sample_rate*wave.sample_block_period/1000.0);
 	wave.sample_block_num = (int)ceil( (double)wave.sample_num / wave.sample_block_size);
@@ -123,6 +123,7 @@ void readChunks(fstream &file)
 {
 	bool gotFmt = false, gotData = false;
 	char char4[5];
+	int int4;
 
 	file.seekg(12);
 	int i = 1;
@@ -141,6 +142,14 @@ void readChunks(fstream &file)
 		{
 			readDataChunk(file);
 			gotData = true;
+		}
+		else{
+			//cin>> int4;
+			// Skiping chunks
+			file.read((char *)&int4, 4);
+			cout << int4 << "to ignore" << endl;
+			
+			file.ignore(int4);
 		}
 		cout << "----------------" << endl;
 	}
@@ -186,31 +195,44 @@ void calculateAverageMagnitude()
 
 void searchForSlienceBlock()
 {
-	const double threshold = 200;
+	const double threshold = 100;
+	int consecutiveBlock = 0;
+	int totalSlienceBlock = 0;
+	bool sliencing;
 	bool *slienceBlock = (bool *)malloc(wave.sample_block_num*sizeof(bool));
 	for (int i = 0; i < wave.sample_block_num; i++) {
 		slienceBlock[i] = wave.sample_rms[i] < threshold;
 	}
 
 	for (int i = 0; i < wave.sample_block_num; i++) {
-		bool sliencing = false;
+		sliencing = false;
 		for (; i < wave.sample_block_num; i++) {
 			if (slienceBlock[i] == true) {
 				if (!sliencing) {
+					totalSlienceBlock+=consecutiveBlock;
+					consecutiveBlock = 1;
 					sliencing = true;
 					cout << wave.sample_block_period*i<<"ms through ";
 				}
+				consecutiveBlock++;
 			}
 			else{
 				if(sliencing) { 
-					cout << wave.sample_block_period*i << "ms" << endl;
+					cout << wave.sample_block_period*i << "ms" 
+					<< " --- " << consecutiveBlock << " blocks" << endl;
 				}
 				break;
 			}
 		}
-		
 	}
 
+	if (sliencing==true){
+		totalSlienceBlock += consecutiveBlock;
+		cout << "end" << " --- "<< consecutiveBlock << " blocks" << endl;
+	}
+	cout << "Total slience block: " << totalSlienceBlock << endl;
+	cout << "Total silence time: "  << totalSlienceBlock*wave.sample_block_period/1000.0 << "s" << endl;
+	cout << "Total silence percentage: " << (float)totalSlienceBlock/wave.sample_block_num*100 << "%" << endl;
 }
 
 

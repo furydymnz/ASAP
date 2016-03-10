@@ -281,3 +281,7 @@ $RECYCLE.BIN/
 *.lnk
 *.vcxproj
 ASAP.vcxproj.filters
+
+asap
+
+*.wav
