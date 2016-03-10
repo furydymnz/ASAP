@@ -145,6 +145,15 @@ void readChunks(fstream &file)
 	}
 }
 
+void calculateAverageMagnitude()
+{
+	int sample;
+	for (int i = 0; i < wave.sample_num; i++)
+	{
+		
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	fstream file;
@@ -155,12 +164,18 @@ int main(int argc, char *argv[])
 		
 	file.open(argv[1], ios::binary | ios::in);
 
+	if (!file.is_open()){
+		cout << "File opening error" << endl;
+		return 0;
+	}
+
 	if (!isWave(file)){
 		cout << "This is not a .wav file" << endl;
 		return 0;
 	}
 
 	readChunks(file);
+	calculateAverageMagnitude();
 
 	free(wave.int2Data);
 	free(wave.int4Data);
