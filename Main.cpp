@@ -14,7 +14,9 @@ struct Wave{
 	int sample_block_num;
 	int sample_block_size;
 	int sample_block_period;
+
 	int *data;
+	double *sample_rms;
 } wave;
 
 bool isWave(fstream &file)
@@ -108,7 +110,7 @@ void readDataChunk(fstream &file)
 		break;
 	}
 
-	wave.sample_block_period = 50;   //ms
+	wave.sample_block_period = 30;   //ms
 	// Take 1s as a sample block, so there are (sample_rate / byte_rate) sample blocks
 	wave.sample_block_size = (int)ceil(wave.sample_rate*wave.sample_block_period/1000.0);
 	wave.sample_block_num = (int)ceil( (double)wave.sample_num / wave.sample_block_size);
@@ -148,7 +150,7 @@ void calculateAverageMagnitude()
 {
 	int r = 0, p = 0, windowPivot = 0;
 	double sample_sum = 0.0, average_magnitude = 0.0;
-	double *sample_rms = (double *)malloc(wave.sample_block_num*sizeof(double));
+	wave.sample_rms = (double *)malloc(wave.sample_block_num*sizeof(double));
 
 	for (int i = 0; i < wave.sample_block_num; i++) {
 		windowPivot = 0;
@@ -158,30 +160,59 @@ void calculateAverageMagnitude()
 		}
 		sample_sum /= windowPivot;
 		sample_sum = sqrt(sample_sum);
+		/*
 		cout << wave.sample_block_period*i << "ms " 
 			<< "from " << i*wave.sample_block_size
 			<< " to " << r << ": " << sample_sum << endl;
-		
-		sample_rms[p++] = sample_sum;
+		*/
+		(wave.sample_rms)[p++] = sample_sum;
 	}
 
 	cout << "sample rms: ";
 	for (int i = 0; i < wave.sample_block_num; i++)
-		cout << sample_rms[i] << ", ";
+		cout << wave.sample_rms[i] << ", ";
 	cout << endl;
 
 	sample_sum = 0;
 	cout << "sample rms rms: ";
 	for (int i = 0; i < wave.sample_block_num; i++){
-		sample_sum += sample_rms[i] * sample_rms[i];
+		sample_sum += wave.sample_rms[i] * wave.sample_rms[i];
 	}
 	sample_sum /= wave.sample_block_num;
 	sample_sum = sqrt(sample_sum);
 	cout << sample_sum;
 	cout << endl;
+}
 
+void searchForSlienceBlock()
+{
+	const double threshold = 200;
+	bool *slienceBlock = (bool *)malloc(wave.sample_block_num*sizeof(bool));
+	for (int i = 0; i < wave.sample_block_num; i++) {
+		slienceBlock[i] = wave.sample_rms[i] < threshold;
+	}
+
+	for (int i = 0; i < wave.sample_block_num; i++) {
+		bool sliencing = false;
+		for (; i < wave.sample_block_num; i++) {
+			if (slienceBlock[i] == true) {
+				if (!sliencing) {
+					sliencing = true;
+					cout << wave.sample_block_period*i<<"ms through ";
+				}
+			}
+			else{
+				if(sliencing) { 
+					cout << wave.sample_block_period*i << "ms" << endl;
+				}
+				break;
+			}
+		}
+		
+	}
 
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -205,6 +236,7 @@ int main(int argc, char *argv[])
 
 	readChunks(file);
 	calculateAverageMagnitude();
+	searchForSlienceBlock();
 
 	free(wave.data);
 	return 0;
