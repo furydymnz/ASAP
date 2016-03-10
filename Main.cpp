@@ -144,7 +144,6 @@ void readChunks(fstream &file)
 			gotData = true;
 		}
 		else{
-			//cin>> int4;
 			// Skiping chunks
 			file.read((char *)&int4, 4);
 			cout << int4 << "to ignore" << endl;
